@@ -20,6 +20,7 @@ import '../../features/admin/presentation/bunks/bunk_list_screen.dart';
 import '../../features/admin/presentation/bunks/bunk_detail_screen.dart';
 import '../../features/admin/presentation/config/global_config_screen.dart';
 import '../../features/admin/presentation/analytics/analytics_dashboard_screen.dart';
+import '../../features/admin/presentation/analytics/analytics_bunk_list_screen.dart';
 import '../../features/admin/presentation/analytics/transaction_list_screen.dart';
 import '../../features/admin/presentation/analytics/audit_log_screen.dart';
 import '../../features/admin/presentation/profile/admin_profile_screen.dart';
@@ -131,7 +132,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/admin/analytics',
-        builder: (context, state) => const AnalyticsDashboardScreen(),
+        builder: (context, state) => const AnalyticsBunkListScreen(),
+        routes: [
+          GoRoute(
+            path: 'dashboard', // /admin/analytics/dashboard
+            name: 'analytics_dashboard',
+            builder: (context, state) {
+              final q = state.uri.queryParameters;
+              return AnalyticsDashboardScreen(
+                bunkId: q['bunkId'],
+                initialPeriod: q['period'],
+                initialStartDate: q['startDate'],
+                initialEndDate: q['endDate'],
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: '/admin/transactions',
