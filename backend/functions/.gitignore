@@ -1,0 +1,9 @@
+node_modules
+.npm
+firebase-debug.log
+firebase-debug.log.*
+*.log
+serviceAccount.json
+serviceAccountKey.json
+.env
+.DS_Store

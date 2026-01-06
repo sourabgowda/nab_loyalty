@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "141137172814",
+    "project_id": "loyalty-first",
+    "storage_bucket": "loyalty-first.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:141137172814:android:fddb2060a32f656790a61f",
+        "android_client_info": {
+          "package_name": "com.bunkloyalty.bunk_loyalty"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA93kmXmnmIQugFw9iRqTub_knp7E-3wxk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:141137172814:android:007f900dcf22802a90a61f",
+        "android_client_info": {
+          "package_name": "com.example.frontend"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA93kmXmnmIQugFw9iRqTub_knp7E-3wxk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:141137172814:android:ebdcd8fbc65c66f090a61f",
+        "android_client_info": {
+          "package_name": "com.loyalty.first.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA93kmXmnmIQugFw9iRqTub_knp7E-3wxk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

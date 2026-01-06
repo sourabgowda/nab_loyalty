@@ -1,0 +1,23 @@
+{
+    "firestore": {
+        "rules": "backend/firestore.rules",
+        "indexes": "firestore.indexes.json",
+        "ignore": [
+            "firebase.json",
+            "**/.*",
+            "**/node_modules/**"
+        ]
+    },
+    "functions": [
+        {
+            "source": "backend/functions",
+            "codebase": "default",
+            "ignore": [
+                "node_modules",
+                ".git",
+                "firebase-debug.log",
+                "firebase-debug.log.*"
+            ]
+        }
+    ]
+}

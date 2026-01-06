@@ -1,0 +1,60 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAdmin() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
+    function isManager() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'manager';
+    }
+    
+    // Explicitly block all writes from client SDK
+    match /{document=**} {
+      allow write: if false;
+    }
+
+    // User Profiles
+    match /users/{userId} {
+      // Users can read their own profile. Admins can read all.
+      // Managers? Might need to seek customers. Sticking to owned-read + Admin.
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Bunks
+    match /bunks/{bunkId} {
+      // Authenticated users can read bunks? (For location etc?)
+      // Customers need valid bunks list? No, they don't browse bunks.
+      // Manager needs to find their bunk.
+      // Admin reads all.
+      allow read: if request.auth != null; 
+    }
+
+    // Transactions
+    match /transactions/{txId} {
+      // Customer Own
+      // Manager (complex, skipping direct read permission for manager for now, using Cloud Function mostly?)
+      // But Customer Frontend uses direct read.
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+      // Note: List queries must filter by userId matching auth.uid
+      allow list: if request.auth != null && request.query.filters.userId == request.auth.uid;
+    }
+
+    // Global Config
+    match /globalConfig/{docId} {
+      allow read: if request.auth != null;
+    }
+    
+    // Bunk Daily Stats (Admin Only via API, but maybe Manager?)
+    match /bunkDailyStats/{docId} {
+      allow read: if request.auth != null && isAdmin();
+    }
+    
+    // Audit Logs (Admin Only)
+    match /auditLogs/{logId} {
+       allow read: if request.auth != null && isAdmin();
+    }
+  }
+}
