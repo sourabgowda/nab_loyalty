@@ -75,11 +75,12 @@ class _AnalyticsBunkListScreenState
                       }
                     } else {
                       setState(() {
-                        // Clear custom dates if switching back to preset
-                        _filter = _filter.copyWith(
+                        // Clear custom dates by treating it as a fresh filter
+                        // This avoids copyWith preserving old non-null dates
+                        _filter = AnalyticsFilter(
                           period: newPeriod,
-                          startDate: null,
-                          endDate: null,
+                          // Preserve other fields if any in future, but for now reset dates
+                          // date is typically 'today' unless we add a date picker for 'Day' mode
                         );
                       });
                     }
@@ -106,7 +107,6 @@ class _AnalyticsBunkListScreenState
       body: analyticsAsync.when(
         data: (response) {
           final bunks = response.bunks ?? [];
-          print("UI Check: bunks length = ${bunks.length}");
 
           if (bunks.isEmpty) {
             return Center(
@@ -169,7 +169,11 @@ class _AnalyticsBunkListScreenState
     final currencyFormat = NumberFormat.currency(symbol: '₹', decimalDigits: 0);
     final totalFuel = bunk['totalFuelAmount'] ?? 0;
     final totalPaid = bunk['totalPaidAmount'] ?? 0;
+    final totalPtsCredited = bunk['totalPointsDistributed'] ?? 0;
+    final totalPtsRedeemed = bunk['totalPointsRedeemed'] ?? 0;
+
     final bunkName = bunk['bunkName'] ?? 'Unknown Bunk';
+    final location = bunk['location'] ?? 'Unknown Location';
     final bunkId = bunk['bunkId'];
 
     return Card(
@@ -177,8 +181,6 @@ class _AnalyticsBunkListScreenState
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         onTap: () {
-          // Navigate to Detailed Dashboard
-          // We pass the CURRENT filter settings so the detail view opens in the same state
           final queryParams = {'bunkId': bunkId, 'period': _filter.period};
           if (_filter.startDate != null)
             queryParams['startDate'] = _filter.startDate;
@@ -194,27 +196,60 @@ class _AnalyticsBunkListScreenState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header: Name & Location
               Text(
                 bunkName,
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 4),
+              Text(
+                location,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey[700]),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Single Stats Row
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildStatItem(
-                    context,
-                    'Fuel',
-                    currencyFormat.format(totalFuel),
-                    Colors.blue,
+                  Expanded(
+                    child: _buildStatItem(
+                      context,
+                      'Fuel',
+                      currencyFormat.format(totalFuel),
+                      Colors.blue.shade700,
+                    ),
                   ),
-                  _buildStatItem(
-                    context,
-                    'Paid',
-                    currencyFormat.format(totalPaid),
-                    Colors.green,
+                  Expanded(
+                    child: _buildStatItem(
+                      context,
+                      'Paid',
+                      currencyFormat.format(totalPaid),
+                      Colors.green.shade700,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildStatItem(
+                      context,
+                      'Pts Cr', // Removed '.' for space
+                      '$totalPtsCredited',
+                      Colors.orange.shade800,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildStatItem(
+                      context,
+                      'Pts Rd', // Removed '.' for space
+                      '$totalPtsRedeemed',
+                      Colors.red.shade800,
+                    ),
                   ),
                 ],
               ),

@@ -53,13 +53,7 @@ class BunkDailyStats {
   });
 
   factory BunkDailyStats.fromMap(Map<String, dynamic> map) {
-    print("Parsing Totals from: $map");
-    map.forEach(
-      (k, v) =>
-          print("Key: $k (${k.runtimeType}), Value: $v (${v.runtimeType})"),
-    );
-
-    final stats = BunkDailyStats(
+    return BunkDailyStats(
       id: map['id']?.toString() ?? '',
       bunkId: map['bunkId']?.toString() ?? '',
       date: map['date']?.toString() ?? '',
@@ -72,10 +66,20 @@ class BunkDailyStats {
       managers: map['managers'],
       bunkName: map['bunkName'],
     );
-    print(
-      "Parsed Stats: Fuel=${stats.totalFuelAmount}, Count=${stats.transactionCount}",
+  }
+
+  factory BunkDailyStats.empty() {
+    return BunkDailyStats(
+      id: 'empty',
+      bunkId: '',
+      date: '',
+      totalFuelAmount: 0,
+      totalPaidAmount: 0,
+      totalPointsDistributed: 0,
+      totalPointsRedeemed: 0,
+      transactionCount: 0,
+      managers: {},
     );
-    return stats;
   }
 }
 
@@ -106,19 +110,18 @@ final adminTransactionListProvider = FutureProvider.autoDispose
             .call(params);
 
         final data = result.data;
-        print("FetchTransactions Result: $data");
 
         if (data is List) {
           return data.cast<Map<String, dynamic>>();
         } else if (data is Map && data['transactions'] is List) {
           return (data['transactions'] as List).cast<Map<String, dynamic>>();
         }
-        print("Unknown Data Format");
         return [];
       } catch (e, st) {
-        print("FetchTransactions Error: $e");
-        print(st);
-        throw e;
+        // ignore: avoid_print
+        // print("FetchTransactions Error: $e");
+        // print(st);
+        return [];
       }
     });
 
@@ -195,13 +198,6 @@ class AnalyticsResponse {
   });
 
   factory AnalyticsResponse.fromMap(Map<String, dynamic> map) {
-    print("Parsing Analytics Response: keys=${map.keys}");
-    if (map['bunks'] != null) {
-      print("Bunks found: ${(map['bunks'] as List).length}");
-    } else {
-      print("No 'bunks' key in response");
-    }
-
     return AnalyticsResponse(
       totals: BunkDailyStats.fromMap(
         map['totals'] != null ? Map<String, dynamic>.from(map['totals']) : {},
@@ -227,13 +223,9 @@ final analyticsProvider = FutureProvider.autoDispose
           if (filter.endDate != null) 'endDate': filter.endDate,
         };
 
-        print("Analytics Request Params: $params");
-
         final result = await FirebaseFunctions.instance
             .httpsCallable('fetchAnalytics')
             .call(params);
-
-        print("Analytics Result Data: ${result.data}");
 
         if (result.data is Map) {
           return AnalyticsResponse.fromMap(
@@ -243,21 +235,10 @@ final analyticsProvider = FutureProvider.autoDispose
 
         if (result.data is List) {
           final list = (result.data as List).cast<dynamic>();
-          print(
-            "Received List of size ${list.length}. Aggregating client-side.",
-          );
 
           if (list.isEmpty) {
             return AnalyticsResponse(
-              totals: BunkDailyStats(
-                id: 'empty',
-                bunkId: '',
-                date: '',
-                totalFuelAmount: 0,
-                totalPointsDistributed: 0,
-                totalPointsRedeemed: 0,
-                transactionCount: 0,
-              ),
+              totals: BunkDailyStats.empty(),
               managers: [],
             );
           }
@@ -322,18 +303,7 @@ final analyticsProvider = FutureProvider.autoDispose
         }
 
         // Fallback emptiness
-        return AnalyticsResponse(
-          totals: BunkDailyStats(
-            id: 'empty',
-            bunkId: '',
-            date: '',
-            totalFuelAmount: 0,
-            totalPointsDistributed: 0,
-            totalPointsRedeemed: 0,
-            transactionCount: 0,
-          ),
-          managers: [],
-        );
+        return AnalyticsResponse(totals: BunkDailyStats.empty(), managers: []);
       } catch (e) {
         print("Analytics Fetch Error: $e");
         // Return empty on error to prevent UI crash

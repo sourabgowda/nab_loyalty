@@ -7,7 +7,11 @@ final adminBunkListProvider =
       final snapshot = await FirebaseFirestore.instance
           .collection('bunks')
           .get();
-      return snapshot.docs.map((doc) => doc.data()).toList();
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        data['bunkId'] = doc.id;
+        return data;
+      }).toList();
     });
 
 final adminBunkDetailProvider = FutureProvider.autoDispose

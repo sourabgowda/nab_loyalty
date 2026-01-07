@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:go_router/go_router.dart';
 import '../../data/analytics_provider.dart';
+import '../../data/bunk_management_provider.dart';
 import '../../data/global_config_provider.dart';
 import 'package:intl/intl.dart';
 
@@ -55,6 +56,41 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
       _selectedFuelType = 'All';
     }
 
+    final bunksAsync = ref.watch(adminBunkListProvider);
+    final bunkAcc = bunksAsync.when(
+      data: (data) => data,
+      error: (_, __) => <Map<String, dynamic>>[],
+      loading: () => <Map<String, dynamic>>[],
+    );
+    final bunkMap = {for (var b in bunkAcc) b['bunkId']: b};
+
+    // Prepare Bunk Dropdown Items
+    final bunkItems = <DropdownMenuItem<String>>[
+      const DropdownMenuItem(value: '', child: Text('All Bunks')),
+    ];
+    for (final b in bunkAcc) {
+      final name = b['bunkName'] ?? b['name'] ?? 'Unknown';
+      final loc = b['location'] ?? '';
+      final label = loc.isNotEmpty ? '$name ($loc)' : name;
+      bunkItems.add(
+        DropdownMenuItem(
+          value: b['bunkId'].toString(),
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 13),
+          ),
+        ),
+      );
+    }
+
+    // Ensure selected value exists in items
+    var currentBunkSelection = _bunkIdController.text;
+    if (bunkItems.every((item) => item.value != currentBunkSelection)) {
+      currentBunkSelection = '';
+      // Don't modify controller in build, just use local var
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Transaction Log'),
@@ -65,7 +101,7 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
       ),
       body: Column(
         children: [
-          // Filters
+          // Filters (Keep Same)
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Card(
@@ -123,21 +159,23 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
                     const SizedBox(height: 8),
                     Row(
                       children: [
+                        // Bunk Filter Dropdown
                         Expanded(
-                          child: TextField(
-                            controller: _bunkIdController,
+                          flex: 2,
+                          child: DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            value: currentBunkSelection,
                             decoration: const InputDecoration(
-                              labelText: 'Bunk ID',
+                              labelText: 'Select Bunk',
                               isDense: true,
                               border: OutlineInputBorder(),
                             ),
-                            onChanged: (_) => setState(
-                              () {},
-                            ), // Trigger rebuild debounced? No, explicit refresh needed?
-                            // Actually watch is reactive to filter object changes.
-                            // But TextField onChanged fires every char.
-                            // Better to have "Apply" button or debounce.
-                            // Implementing Apply button.
+                            items: bunkItems,
+                            onChanged: (val) {
+                              setState(() {
+                                _bunkIdController.text = val ?? '';
+                              });
+                            },
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -185,6 +223,13 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
                         ? DateFormat('MM/dd HH:mm').format(date)
                         : 'No Date';
 
+                    // Resolve Bunk Name
+                    final bunkId = tx['bunkId'] ?? '';
+                    final bunkData = bunkMap[bunkId];
+                    final bunkDisplayName = bunkData != null
+                        ? "${bunkData['name']} (${bunkData['location']})"
+                        : (tx['bunkName'] ?? 'Bunk: $bunkId');
+
                     return Card(
                       margin: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -205,7 +250,7 @@ class _TransactionListScreenState extends ConsumerState<TransactionListScreen> {
                         ),
                         subtitle: Text(
                           '$dateStr • ${tx['fuelType']} • ₹$amount\n'
-                          '${tx['bunkName'] ?? 'Bunk: ' + (tx['bunkId'] ?? '?')}\n'
+                          '$bunkDisplayName\n'
                           'Config: Rate ${tx['pointValue'] ?? '?'} pts/₹ | ${tx['creditPercentage'] ?? '?'}%',
                         ),
                         isThreeLine: true,
